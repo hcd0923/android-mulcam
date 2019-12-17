@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="http://google.com 동해물과 백두산이 마르고 닳도록 하느님이 밝도록 하느님이 보우하사"
+        android:autoLink="web"
+        android:lines="1"
+        />
+
+<!--    기본 한줄 입력, 유저가 키보드에서 엔터 입력으로 여러줄로 늘어난다.
+        초기부터 여러줄을 원한다면 linse : 화면 3줄 고정. 무한입력-->
+
+    <EditText
+        android:id="@+id/edit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:lines="3"
+        android:gravity="center"
+        />
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/imagetest"
+        android:clickable="true"/>
+    <Button
+        android:id="@+id/btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="click me"/>
+
+</LinearLayout>
