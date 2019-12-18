@@ -13,18 +13,18 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         String studentSql = "create table tb_student (" +
-                "_id integer primary key autoincement," +
+                "_id integer primary key autoincrement," +
                 "name not null," +
                 "email," +
                 "phone," +
                 "photo," +
-                "memo";
+                "memo)";
 
         String scoreSql = "create table tb_score (" +
-                "_id integer primary key autoincement," +
+                "_id integer primary key autoincrement," +
                 "student_id not null," +
                 "date," +
-                "score";
+                "score)";
 
         db.execSQL(studentSql);
         db.execSQL(scoreSql);

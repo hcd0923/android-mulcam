@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--custom view 를 이용하는 activity 개발자가 layout.xml 등록
+    개발자가 임의 속성 추가 가능한가??? builder가 인지하는 속성이 아니라서 불가하다.
+    하지만 선언하고 사용하면 사용가능핟.-->
+    <declare-styleable name="AAA">
+        <attr name="scoreColor" format="color"/>
+    </declare-styleable>
+
+
+</resources>
