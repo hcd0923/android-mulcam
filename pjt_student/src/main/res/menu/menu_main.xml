@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!--actionBar 라는 개념은 api level 11버전에서 추가
+        하위 호환을 보장해주기 위해 라이브러리 appcompat-->
+    <item
+        android:id="@+id/menu_main_search"
+        android:title="search"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        android:icon="@android:drawable/ic_menu_search"
+        app:showAsAction="always"/>
+
+</menu>
