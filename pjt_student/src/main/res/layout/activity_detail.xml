@@ -81,11 +81,17 @@
                     android:layout_height="match_parent"
                      />
 
-                <TextView
+                <WebView
                     android:id="@+id/detail_score_chart"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:text="score chart" />
+                    />
+
+<!--                <TextView-->
+<!--                    android:id="@+id/detail_score_chart"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:text="score chart" />-->
                 <!--                <TextView-->
                 <!--                    android:id="@+id/detail_score_add"-->
                 <!--                    android:layout_width="match_parent"-->

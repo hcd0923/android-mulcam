@@ -1,10 +1,15 @@
 package com.example.pjt_student;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.method.LinkMovementMethod;
@@ -12,7 +17,11 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.URLSpan;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -21,6 +30,7 @@ import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.res.ResourcesCompat;
 
@@ -29,7 +39,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
-public class DetailActivity extends AppCompatActivity {
+public class DetailActivity extends AppCompatActivity implements TabHost.OnTabChangeListener, View.OnClickListener{
     ImageView studentImageView;
     TextView nameView;
     TextView phoneView;
@@ -37,8 +47,6 @@ public class DetailActivity extends AppCompatActivity {
     TabHost host;
 
     MyView scoreView;
-
-
 
     int studentId=1;
 
@@ -51,6 +59,7 @@ public class DetailActivity extends AppCompatActivity {
 
     SimpleAdapter simpleAdapter;
 
+    WebView webView;
 
 
     @Override
@@ -58,11 +67,15 @@ public class DetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
 
+        Intent intent = getIntent();
+        studentId = intent.getIntExtra("id", 1);
+
         initData();
         initTab();
         initAddScore();
         initSpannable();
         initList();
+        initWebView();
     }
 
     private void initList() {
@@ -289,11 +302,167 @@ public class DetailActivity extends AppCompatActivity {
 
         db.close();
 
+        studentImageView.setOnClickListener(this);
+        //photo 정보로.. 초기 이미지 출력..
+        initStudentImage(photo);
+
+
+    }
+
+    private void initStudentImage(String path){
+        if(path != null && !path.equals("")){
+            BitmapFactory.Options options=new BitmapFactory.Options();
+            options.inSampleSize=10;
+            Bitmap bitmap=BitmapFactory.decodeFile(path, options);
+            if(bitmap != null){
+                studentImageView.setImageBitmap(bitmap);
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if(requestCode==10 && resultCode==RESULT_OK){
+            //gallery app 목록에서 사진을 한장 선택해서 되돌아 왔다고 하더라도 사진의 경로가
+            //넘어오지는 않는다..
+            //넘어오는건 선택한 사진을 식별하는 식별자만.. url 형태로.. url 의 맨 마지막 단어가
+            //식별자..
+            //식별자를 조건으로 구체적으로 원하는 데이터를 gallery app 에게 요청..
+            //외부 앱 연동.. 데이터.. 연동.. ContentProvider 이용...
+            Uri uri=data.getData();
+            //획득하고자 하는 데이터..
+            String[] columns={MediaStore.Images.Media.DATA};//경로..
+            //데이터 획득..
+            Cursor cursor=getContentResolver().query(uri, columns, null,
+                    null, null);
+
+            cursor.moveToFirst();
+
+            String path=cursor.getString(0);
+
+            Log.d("kkang", path);
+
+            if(path != null){
+                DBHelper helper=new DBHelper(this);
+                SQLiteDatabase db=helper.getWritableDatabase();
+                db.execSQL("update tb_student set photo=? where _id=?",
+                        new String[]{path, String.valueOf(studentId)});
+                db.close();
+
+                initStudentImage(path);
+            }
+
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onClick(View v) {
+        //intent로.. gallery app 목록 activity....
+        Intent intent=new Intent();
+        intent.setAction(Intent.ACTION_PICK);
+        intent.setData(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        //결과 되돌려 받아야...
+        startActivityForResult(intent, 10);
+
+    }
+
+    private void initWebView(){
+        webView=findViewById(R.id.detail_score_chart);
+        //android WebView 의  js engine 이 기본 꺼져있다..
+        WebSettings settings=webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+
+        //js 가 동작하다가 데이터 획득 목적으로 java 의 함수를 호출..
+        //java에서 공개한 객체의 함수만 호출 가능하다..
+        //공개한 객체를 js 에서 android 라는 이름.. 개발자 임의 이름.. 으로 사용..
+        //이름 바꾸어 몇개의 객체라도 공개 가능..
+        webView.addJavascriptInterface(new JavascriptTest(), "android");
+    }
+
+    public class JavascriptTest {
+        //이 객체가 js 에 공개되었다고 하더라도.. 아래의 어노테이션이 추가된 함수만 호출 가능..
+        //매개변수, 리턴으로 데이터 주고 받을수 있다..
+        @JavascriptInterface
+        public String getWebData(){
+            StringBuffer buffer=new StringBuffer();
+            buffer.append("[");
+            if(scoreList.size() <= 10){
+                int j=0;
+                for(int i=scoreList.size(); i>0; i--){
+                    buffer.append("["+j+",");
+                    buffer.append(scoreList.get(i-1).get("score"));
+                    buffer.append("]");
+                    if(i>1) buffer.append(",");
+                    j++;
+                }
+            }else {
+                int j=0;
+                for(int i=10; i>0; i--){
+                    buffer.append("["+j+",");
+                    buffer.append(scoreList.get(i-1).get("score"));
+                    buffer.append("]");
+                    if(i>1) buffer.append(",");
+                    j++;
+                }
+            }
+            buffer.append("]");
+            Log.d("kkang", buffer.toString());
+            return buffer.toString();
+        }
+    }
+
+    @Override
+    public void onTabChanged(String tabId) {
+        if(tabId.equals("tab2")){
+            webView.loadUrl("file:///android_asset/test.html");
+        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_detail, menu);
         return super.onCreateOptionsMenu(menu);
+    }
+
+    //메뉴 이벤트 콜백함수..
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        String sendData=scoreList.get(0).get("score")+" "+
+                scoreList.get(0).get("date");
+
+        //이벤트 발생 메뉴의 id 획득..
+        int id=item.getItemId();
+
+        if(id==R.id.menu_detail_sms){
+            String phone=phoneView.getText().toString();
+            if(phone != null && !phone.equals("")){
+                //sms app 발송 activity를 intent로...
+                Intent intent=new Intent();
+                intent.setAction(Intent.ACTION_SENDTO);
+                intent.setData(Uri.parse("smsto:"+phone));
+                intent.putExtra("sms_body", sendData);
+                startActivity(intent);
+            }
+        }else if(id==R.id.menu_detail_email){
+            String email=emailView.getText().toString();
+            if(email != null && !email.equals("")){
+                String url="mailto:"+email+"?subject=score&body="+sendData;
+                Intent intent=new Intent();
+                intent.setAction(Intent.ACTION_SENDTO);
+                intent.setData(Uri.parse(url));
+
+                try{
+                    startActivity(intent);
+                }catch (Exception e){
+                    Toast toast=Toast.makeText(this, "no email app",
+                            Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+
+            }
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
